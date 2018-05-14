@@ -49,7 +49,7 @@
 %global golang_version 1.8.1
 %{!?version: %global version 0.0.1}
 %{!?release: %global release 1}
-%global package_name service-serving-cert-signer
+%global package_name origin-service-serving-cert-signer
 %global product_name OpenShift Service Serving Cert Signer
 %global import_path github.com/openshift/service-serving-cert-signer
 

@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: openshift-service-cert-signer
+  name: service-serving-cert-signer
+  labels:
+    app: openshift-service-serving-cert-signer
+    service-serving-cert-signer: "true"
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openshift-service-serving-cert-signer
+      service-serving-cert-signer: "true"
+  template:
+    metadata:
+      name: service-serving-cert-signer
+      labels:
+        app: openshift-service-serving-cert-signer
+        service-serving-cert-signer: "true"
+    spec:
+      serviceAccountName: service-serving-cert-signer-sa
+      containers:
+      - name: service-serving-cert-signer-controller
+        image: ${IMAGE}
+        imagePullPolicy: IfNotPresent
+        command: ["service-serving-cert-signer", "serving-signing-controller"]
+        args:
+        - "--config=/var/run/configmaps/config/controller-config.yaml"
+        ports:
+        - containerPort: 8443
+        volumeMounts:
+        - mountPath: /var/run/configmaps/config
+          name: config
+        - mountPath: /var/run/secrets/signing-key
+          name: signing-key
+        - mountPath: /var/run/secrets/serving-cert
+          name: serving-cert
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+      volumes:
+      - name: serving-cert
+        secret:
+          defaultMode: 400
+          secretName: service-serving-cert-signer-serving-cert
+          optional: true
+      - name: signing-key
+        secret:
+          defaultMode: 400
+          secretName: service-serving-cert-signer-signing-key
+      - name: config
+        configMap:
+          defaultMode: 440
+          name: service-serving-cert-signer-config
+
+
+

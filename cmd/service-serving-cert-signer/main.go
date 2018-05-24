@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/openshift/service-serving-cert-signer/pkg/cmd/operator"
 	utilflag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
 )
@@ -39,6 +40,8 @@ func NewSSCSCommand() *cobra.Command {
 			os.Exit(1)
 		},
 	}
+
+	cmd.AddCommand(operator.NewOperator())
 
 	return cmd
 }

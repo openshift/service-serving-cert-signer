@@ -1,14 +1,18 @@
-hash: 6386d29ae8efa779aaa0b0858459b792a25c4fe2548a3d0ec82df995f5d6b40f
-updated: 2018-05-14T13:58:23.352628886-04:00
+hash: 18487d8f01c74e098bd4f7274594c345af20c1c2ed3329345412ebf005f62783
+updated: 2018-05-24T10:33:41.615873372-04:00
 imports:
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
   subpackages:
   - quantile
+- name: github.com/certifi/gocertifi
+  version: deb3ae2ef2610fde3330947281941c562861188b
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
   subpackages:
   - spew
+- name: github.com/getsentry/raven-go
+  version: 32a13797442ccb601b11761d74232773c1402d14
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/gogo/protobuf
@@ -18,6 +22,10 @@ imports:
   - sortkeys
 - name: github.com/golang/glog
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
+- name: github.com/golang/groupcache
+  version: 02826c3e79038b59d737d3b1c0a1d937f71a4433
+  subpackages:
+  - lru
 - name: github.com/golang/protobuf
   version: 1643683e1b54a9e88ad26d98f81400c8c9d9f4f9
   subpackages:
@@ -41,6 +49,10 @@ imports:
   version: a0d98a5f288019575c6d1f4bb1573fef2d1fcdc4
   subpackages:
   - simplelru
+- name: github.com/howeyc/gopass
+  version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
+- name: github.com/imdario/mergo
+  version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/json-iterator/go
@@ -49,11 +61,26 @@ imports:
   version: fc2b8d3a73c4867e51861bbdd5ae3c1f0869dd6a
   subpackages:
   - pbutil
-- name: github.com/openshift/library-go
-  version: 20e418d78cdab88870e7d100c906e5101c272c56
+- name: github.com/openshift/api
+  version: 1adcd4e8b64faf3eaa8166a62e92f95cc7ee1d60
   subpackages:
+  - config/v1
+  - operator/v1alpha1
+- name: github.com/openshift/library-go
+  version: f8ad11bbeed0f89ddc8a9adbb4127f7e58fd77d3
+  subpackages:
+  - pkg/config/client
+  - pkg/config/leaderelection
   - pkg/controller
+  - pkg/controller/controllercmd
   - pkg/crypto
+  - pkg/serviceability
+- name: github.com/pborman/uuid
+  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/pkg/profile
+  version: 5b67d428864e92711fcbd2f8629456121a56d91f
 - name: github.com/prometheus/client_golang
   version: e7e903064f5e9eb5da98208bae10b475d4db0f8c
   subpackages:
@@ -188,15 +215,19 @@ imports:
   - pkg/util/framer
   - pkg/util/intstr
   - pkg/util/json
+  - pkg/util/mergepatch
   - pkg/util/net
   - pkg/util/runtime
   - pkg/util/sets
+  - pkg/util/strategicpatch
+  - pkg/util/uuid
   - pkg/util/validation
   - pkg/util/validation/field
   - pkg/util/wait
   - pkg/util/yaml
   - pkg/version
   - pkg/watch
+  - third_party/forked/golang/json
   - third_party/forked/golang/reflect
 - name: k8s.io/apiserver
   version: 0841753fc26e934b715ca7a83dced5bcb721245a
@@ -339,16 +370,32 @@ imports:
   - rest
   - rest/watch
   - testing
+  - tools/auth
   - tools/cache
+  - tools/clientcmd
   - tools/clientcmd/api
+  - tools/clientcmd/api/latest
+  - tools/clientcmd/api/v1
+  - tools/leaderelection
+  - tools/leaderelection/resourcelock
   - tools/metrics
   - tools/pager
+  - tools/record
   - tools/reference
   - transport
   - util/buffer
   - util/cert
   - util/flowcontrol
+  - util/homedir
   - util/integer
   - util/retry
   - util/workqueue
+- name: k8s.io/kube-openapi
+  version: 50ae88d24ede7b8bad68e23c805b5d3da5c8abaf
+  subpackages:
+  - pkg/builder
+  - pkg/common
+  - pkg/handler
+  - pkg/util
+  - pkg/util/proto
 testImports: []

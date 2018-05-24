@@ -10,9 +10,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/openshift/service-serving-cert-signer/pkg/cmd/operator"
 	utilflag "k8s.io/apiserver/pkg/util/flag"
 	"k8s.io/apiserver/pkg/util/logs"
+
+	"github.com/openshift/service-serving-cert-signer/pkg/cmd/operator"
+	"github.com/openshift/service-serving-cert-signer/pkg/cmd/servingcertsigner"
 )
 
 func main() {
@@ -42,6 +44,7 @@ func NewSSCSCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(operator.NewOperator())
+	cmd.AddCommand(servingcertsigner.NewController())
 
 	return cmd
 }

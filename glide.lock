@@ -1,10 +1,12 @@
-hash: 18487d8f01c74e098bd4f7274594c345af20c1c2ed3329345412ebf005f62783
-updated: 2018-05-24T10:33:41.615873372-04:00
+hash: 9d0678fe2b069794e7a880ce86069c0ca63a23b0589a333de539e131f93b4577
+updated: 2018-05-29T15:07:55.057579453-04:00
 imports:
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
   subpackages:
   - quantile
+- name: github.com/blang/semver
+  version: b38d23b8782a487059e8fc8773e9a5b228a77cb6
 - name: github.com/certifi/gocertifi
   version: deb3ae2ef2610fde3330947281941c562861188b
 - name: github.com/davecgh/go-spew
@@ -57,23 +59,40 @@ imports:
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/json-iterator/go
   version: 13f86432b882000a51c6e610c620974462691a97
+- name: github.com/jteeuwen/go-bindata
+  version: a0ff2567cfb70903282db057e799fd826784d41d
 - name: github.com/matttproud/golang_protobuf_extensions
   version: fc2b8d3a73c4867e51861bbdd5ae3c1f0869dd6a
   subpackages:
   - pbutil
 - name: github.com/openshift/api
-  version: 1adcd4e8b64faf3eaa8166a62e92f95cc7ee1d60
+  version: 7c345a55a8b2e4b233bf8449021e9a91052dfdd7
   subpackages:
   - config/v1
   - operator/v1alpha1
+  - servicecertsigner/v1alpha1
+- name: github.com/openshift/client-go
+  version: 0d482887777e2d8bc9aeaade933c2a7f5180bb6d
+  subpackages:
+  - servicecertsigner/clientset/versioned
+  - servicecertsigner/clientset/versioned/scheme
+  - servicecertsigner/clientset/versioned/typed/servicecertsigner/v1alpha1
+  - servicecertsigner/informers/externalversions
+  - servicecertsigner/informers/externalversions/internalinterfaces
+  - servicecertsigner/informers/externalversions/servicecertsigner
+  - servicecertsigner/informers/externalversions/servicecertsigner/v1alpha1
+  - servicecertsigner/listers/servicecertsigner/v1alpha1
 - name: github.com/openshift/library-go
-  version: f8ad11bbeed0f89ddc8a9adbb4127f7e58fd77d3
+  version: 13539e67a7ab38391bed80b360e82812dfab232a
   subpackages:
   - pkg/config/client
   - pkg/config/leaderelection
   - pkg/controller
   - pkg/controller/controllercmd
   - pkg/crypto
+  - pkg/operator/resource/resourceapply
+  - pkg/operator/resource/resourcecread
+  - pkg/operator/resource/resourcemerge
   - pkg/serviceability
 - name: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
@@ -183,6 +202,11 @@ imports:
   - storage/v1
   - storage/v1alpha1
   - storage/v1beta1
+- name: k8s.io/apiextensions-apiserver
+  version: e8ab413e0ae1e19df66d60088a1e11c97b73fdd9
+  subpackages:
+  - pkg/apis/apiextensions
+  - pkg/apis/apiextensions/v1beta1
 - name: k8s.io/apimachinery
   version: 302974c03f7e50f16561ba237db776ab93594ef6
   subpackages:

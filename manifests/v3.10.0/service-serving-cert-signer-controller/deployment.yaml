@@ -25,7 +25,7 @@ spec:
       - name: service-serving-cert-signer-controller
         image: ${IMAGE}
         imagePullPolicy: IfNotPresent
-        command: ["service-serving-cert-signer", "serving-signing-controller"]
+        command: ["service-serving-cert-signer", "serving-cert-signer"]
         args:
         - "--config=/var/run/configmaps/config/controller-config.yaml"
         ports:
@@ -37,29 +37,16 @@ spec:
           name: signing-key
         - mountPath: /var/run/secrets/serving-cert
           name: serving-cert
-        readinessProbe:
-          httpGet:
-            path: /healthz
-            port: 8443
-            scheme: HTTPS
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8443
-            scheme: HTTPS
       volumes:
       - name: serving-cert
         secret:
-          defaultMode: 400
           secretName: service-serving-cert-signer-serving-cert
           optional: true
       - name: signing-key
         secret:
-          defaultMode: 400
           secretName: service-serving-cert-signer-signing-key
       - name: config
         configMap:
-          defaultMode: 440
           name: service-serving-cert-signer-config
 
 

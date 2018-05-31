@@ -2,6 +2,13 @@ apiVersion: v1
 kind: List
 items:
 
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    labels:
+      openshift.io/run-level: "1"
+    name: openshift-core-operators
+
 - apiVersion: apiextensions.k8s.io/v1beta1
   kind: CustomResourceDefinition
   metadata:

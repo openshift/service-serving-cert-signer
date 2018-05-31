@@ -1,5 +1,5 @@
 hash: 9d0678fe2b069794e7a880ce86069c0ca63a23b0589a333de539e131f93b4577
-updated: 2018-05-29T15:07:55.057579453-04:00
+updated: 2018-05-31T11:18:37.553401869-04:00
 imports:
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
@@ -83,7 +83,7 @@ imports:
   - servicecertsigner/informers/externalversions/servicecertsigner/v1alpha1
   - servicecertsigner/listers/servicecertsigner/v1alpha1
 - name: github.com/openshift/library-go
-  version: 13539e67a7ab38391bed80b360e82812dfab232a
+  version: 3601ae4dd46a04c1b8a81b789de67f58f48895b2
   subpackages:
   - pkg/config/client
   - pkg/config/leaderelection
@@ -93,6 +93,8 @@ imports:
   - pkg/operator/resource/resourceapply
   - pkg/operator/resource/resourcecread
   - pkg/operator/resource/resourcemerge
+  - pkg/operator/v1alpha1helpers
+  - pkg/operator/versioning
   - pkg/serviceability
 - name: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4

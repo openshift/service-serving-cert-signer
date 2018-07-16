@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/informers"
 	appsclientv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	coreclientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	rbacclientv1 "k8s.io/client-go/kubernetes/typed/rbac/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -38,6 +39,7 @@ type ServiceCertSignerOperator struct {
 
 	appsv1Client appsclientv1.AppsV1Interface
 	corev1Client coreclientv1.CoreV1Interface
+	rbacv1Client rbacclientv1.RbacV1Interface
 
 	// queue only ever has one item, but it has nice error handling backoff/retry semantics
 	queue workqueue.RateLimitingInterface
@@ -49,11 +51,13 @@ func NewServiceCertSignerOperator(
 	operatorConfigClient scsclientv1alpha1.ServiceCertSignerOperatorConfigsGetter,
 	appsv1Client appsclientv1.AppsV1Interface,
 	corev1Client coreclientv1.CoreV1Interface,
+	rbacv1Client rbacclientv1.RbacV1Interface,
 ) *ServiceCertSignerOperator {
 	c := &ServiceCertSignerOperator{
 		operatorConfigClient: operatorConfigClient,
 		appsv1Client:         appsv1Client,
 		corev1Client:         corev1Client,
+		rbacv1Client:         rbacv1Client,
 
 		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "ServiceCertSignerOperator"),
 	}

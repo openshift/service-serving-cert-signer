@@ -60,6 +60,18 @@ func sync_v310_00_to_latest_APIServiceController(c ServiceCertSignerOperator, op
 		errors = append(errors, fmt.Errorf("%q: %v", "ns", err))
 	}
 
+	requiredClusterRole := resourceread.ReadClusterRoleV1OrDie(v310_00_assets.MustAsset("v3.10.0/apiservice-cabundle-controller/clusterrole.yaml"))
+	_, _, err = resourceapply.ApplyClusterRole(c.rbacv1Client, requiredClusterRole)
+	if err != nil {
+		errors = append(errors, fmt.Errorf("%q: %v", "svc", err))
+	}
+
+	requiredClusterRoleBinding := resourceread.ReadClusterRoleBindingV1OrDie(v310_00_assets.MustAsset("v3.10.0/apiservice-cabundle-controller/clusterrolebinding.yaml"))
+	_, _, err = resourceapply.ApplyClusterRoleBinding(c.rbacv1Client, requiredClusterRoleBinding)
+	if err != nil {
+		errors = append(errors, fmt.Errorf("%q: %v", "svc", err))
+	}
+
 	requiredService := resourceread.ReadServiceV1OrDie(v310_00_assets.MustAsset("v3.10.0/apiservice-cabundle-controller/svc.yaml"))
 	_, _, err = resourceapply.ApplyService(c.corev1Client, requiredService)
 	if err != nil {
@@ -129,6 +141,18 @@ func sync_v310_00_to_latest_SigningController(c ServiceCertSignerOperator, opera
 	_, _, err = resourceapply.ApplyNamespace(c.corev1Client, requiredNamespace)
 	if err != nil {
 		errors = append(errors, fmt.Errorf("%q: %v", "ns", err))
+	}
+
+	requiredClusterRole := resourceread.ReadClusterRoleV1OrDie(v310_00_assets.MustAsset("v3.10.0/service-serving-cert-signer-controller/clusterrole.yaml"))
+	_, _, err = resourceapply.ApplyClusterRole(c.rbacv1Client, requiredClusterRole)
+	if err != nil {
+		errors = append(errors, fmt.Errorf("%q: %v", "svc", err))
+	}
+
+	requiredClusterRoleBinding := resourceread.ReadClusterRoleBindingV1OrDie(v310_00_assets.MustAsset("v3.10.0/service-serving-cert-signer-controller/clusterrolebinding.yaml"))
+	_, _, err = resourceapply.ApplyClusterRoleBinding(c.rbacv1Client, requiredClusterRoleBinding)
+	if err != nil {
+		errors = append(errors, fmt.Errorf("%q: %v", "svc", err))
 	}
 
 	requiredService := resourceread.ReadServiceV1OrDie(v310_00_assets.MustAsset("v3.10.0/service-serving-cert-signer-controller/svc.yaml"))

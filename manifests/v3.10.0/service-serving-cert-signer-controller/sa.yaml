@@ -2,4 +2,4 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   namespace: openshift-service-cert-signer
-  name: apiservice-cabundle-injector-sa
+  name: service-serving-cert-signer-sa

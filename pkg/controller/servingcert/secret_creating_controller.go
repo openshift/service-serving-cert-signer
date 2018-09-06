@@ -22,7 +22,7 @@ import (
 
 	"github.com/openshift/library-go/pkg/crypto"
 	ocontroller "github.com/openshift/library-go/pkg/controller"
-	"github.com/openshift/service-ca/pkg/controller/servingcert/cryptoextensions"
+	"github.com/openshift/service-serving-cert-signer/pkg/controller/servingcert/cryptoextensions"
 )
 
 const (

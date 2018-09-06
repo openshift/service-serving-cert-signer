@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	targetNamespaceName = "openshift-service-ca"
+	targetNamespaceName = "openshift-service-cert-signer"
 	workQueueKey        = "key"
 )
 

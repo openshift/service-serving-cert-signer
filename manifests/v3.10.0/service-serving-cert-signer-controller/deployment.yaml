@@ -1,31 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: openshift-service-ca
-  name: service-ca
+  namespace: openshift-service-cert-signer
+  name: service-serving-cert-signer
   labels:
-    app: openshift-service-ca
-    service-ca: "true"
+    app: openshift-service-serving-cert-signer
+    service-serving-cert-signer: "true"
 spec:
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: openshift-service-ca
-      service-ca: "true"
+      app: openshift-service-serving-cert-signer
+      service-serving-cert-signer: "true"
   template:
     metadata:
-      name: service-ca
+      name: service-serving-cert-signer
       labels:
-        app: openshift-service-ca
-        service-ca: "true"
+        app: openshift-service-serving-cert-signer
+        service-serving-cert-signer: "true"
     spec:
-      serviceAccountName: service-ca-sa
+      serviceAccountName: service-serving-cert-signer-sa
       containers:
-      - name: service-ca-controller
+      - name: service-serving-cert-signer-controller
         image: ${IMAGE}
         imagePullPolicy: IfNotPresent
-        command: ["service-ca", "serving-cert-signer"]
+        command: ["service-serving-cert-signer", "serving-cert-signer"]
         args:
         - "--config=/var/run/configmaps/config/controller-config.yaml"
         ports:
@@ -40,14 +40,14 @@ spec:
       volumes:
       - name: serving-cert
         secret:
-          secretName: service-ca-serving-cert
+          secretName: service-serving-cert-signer-serving-cert
           optional: true
       - name: signing-key
         secret:
-          secretName: service-ca-signing-key
+          secretName: service-serving-cert-signer-signing-key
       - name: config
         configMap:
-          name: service-ca-config
+          name: service-serving-cert-signer-config
 
 
 

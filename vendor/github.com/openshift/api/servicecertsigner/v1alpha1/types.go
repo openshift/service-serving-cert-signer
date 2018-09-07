@@ -24,6 +24,9 @@ type ServiceServingCertSignerConfig struct {
 
 	// Signer holds the signing information used to automatically sign serving certificates.
 	Signer configv1.CertInfo `json:"signer" protobuf:"bytes,4,opt,name=signer"`
+
+	// LeaderElection enables leader election.
+	LeaderElection configv1.LeaderElection `json:"leaderElection" protobuf:"bytes,5,opt,name=leaderElection"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -42,6 +45,9 @@ type APIServiceCABundleInjectorConfig struct {
 
 	// caBundleFile holds the ca bundle to apply to APIServices
 	CABundleFile string `json:"caBundleFile" protobuf:"bytes,4,opt,name=caBundleFile"`
+
+	// LeaderElection enables leader election.
+	LeaderElection configv1.LeaderElection `json:"leaderElection" protobuf:"bytes,5,opt,name=leaderElection"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -60,6 +66,9 @@ type ConfigMapCABundleInjectorConfig struct {
 
 	// caBundleFile holds the ca bundle to apply to ConfigMaps
 	CABundleFile string `json:"caBundleFile" protobuf:"bytes,4,opt,name=caBundleFile"`
+
+	// LeaderElection enables leader election.
+	LeaderElection configv1.LeaderElection `json:"leaderElection" protobuf:"bytes,5,opt,name=leaderElection"`
 }
 
 // DelegatedAuthentication allows authentication to be disabled.

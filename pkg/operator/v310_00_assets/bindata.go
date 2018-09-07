@@ -76,7 +76,16 @@ rules:
   - watch
   - update
   - patch
-`)
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - create`)
 
 func v3100ApiserviceCabundleControllerClusterroleYamlBytes() ([]byte, error) {
 	return _v3100ApiserviceCabundleControllerClusterroleYaml, nil
@@ -364,6 +373,16 @@ rules:
   - watch
   - update
   - patch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - create
 `)
 
 func v3100ServiceServingCertSignerControllerClusterroleYamlBytes() ([]byte, error) {

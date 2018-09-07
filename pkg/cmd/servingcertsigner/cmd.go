@@ -83,7 +83,6 @@ func (o *ControllerCommandOptions) StartController() error {
 
 	return controllercmd.NewController(componentName, (&servingcert.ServingCertOptions{Config: config}).RunServingCert).
 		WithKubeConfigFile(o.basicFlags.KubeConfigFile, nil).
-		// TODO we can update the API with leader election
-		//WithLeaderElection(config.LeaderElection, "", componentName+"-lock").
+		WithLeaderElection(config.LeaderElection, "", componentName+"-lock").
 		Run()
 }

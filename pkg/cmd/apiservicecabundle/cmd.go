@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	componentName = "openshift-service-serving-cert-signer"
+	componentName = "openshift-apiservice-cabundle-injector"
 	configScheme  = runtime.NewScheme()
 )
 
@@ -83,7 +83,6 @@ func (o *ControllerCommandOptions) StartController() error {
 
 	return controllercmd.NewController(componentName, (&apiservicecabundle.APIServiceCABundleInjectorOptions{Config: config}).RunAPIServiceCABundleInjector).
 		WithKubeConfigFile(o.basicFlags.KubeConfigFile, nil).
-		// TODO we can update the API with leader election
-		//WithLeaderElection(config.LeaderElection, "", componentName+"-lock").
+		WithLeaderElection(config.LeaderElection, "", componentName+"-lock").
 		Run()
 }

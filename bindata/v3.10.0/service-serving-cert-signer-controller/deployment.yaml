@@ -48,6 +48,7 @@ spec:
       - name: config
         configMap:
           name: service-serving-cert-signer-config
-
-
-
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - operator: Exists

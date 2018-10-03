@@ -215,9 +215,10 @@ spec:
       - name: config
         configMap:
           name: apiservice-cabundle-injector-config
-
-
-
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - operator: Exists
 `)
 
 func v3100ApiserviceCabundleControllerDeploymentYamlBytes() ([]byte, error) {
@@ -505,9 +506,10 @@ spec:
       - name: config
         configMap:
           name: service-serving-cert-signer-config
-
-
-
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - operator: Exists
 `)
 
 func v3100ServiceServingCertSignerControllerDeploymentYamlBytes() ([]byte, error) {

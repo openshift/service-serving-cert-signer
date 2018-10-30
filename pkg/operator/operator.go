@@ -27,6 +27,7 @@ import (
 	scsinformerv1alpha1 "github.com/openshift/client-go/servicecertsigner/informers/externalversions/servicecertsigner/v1alpha1"
 	"github.com/openshift/library-go/pkg/operator/v1alpha1helpers"
 	"github.com/openshift/library-go/pkg/operator/versioning"
+	"k8s.io/client-go/util/flowcontrol"
 )
 
 const (
@@ -43,6 +44,8 @@ type ServiceCertSignerOperator struct {
 
 	// queue only ever has one item, but it has nice error handling backoff/retry semantics
 	queue workqueue.RateLimitingInterface
+
+	rateLimiter flowcontrol.RateLimiter
 }
 
 func NewServiceCertSignerOperator(
@@ -60,6 +63,8 @@ func NewServiceCertSignerOperator(
 		rbacv1Client:         rbacv1Client,
 
 		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "ServiceCertSignerOperator"),
+
+		rateLimiter: flowcontrol.NewTokenBucketRateLimiter(0.05 /*3 per minute*/, 4),
 	}
 
 	serviceCertSignerConfigInformer.Informer().AddEventHandler(c.eventHandler())
@@ -204,6 +209,9 @@ func (c *ServiceCertSignerOperator) processNextWorkItem() bool {
 		return false
 	}
 	defer c.queue.Done(dsKey)
+
+	// Wait for a rate limit token to slow down the sync loop.
+	c.rateLimiter.Accept()
 
 	err := c.sync()
 	if err == nil {

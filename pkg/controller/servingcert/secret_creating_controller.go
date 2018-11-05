@@ -20,8 +20,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/openshift/library-go/pkg/crypto"
 	ocontroller "github.com/openshift/library-go/pkg/controller"
+	"github.com/openshift/library-go/pkg/crypto"
 	"github.com/openshift/service-serving-cert-signer/pkg/controller/servingcert/cryptoextensions"
 )
 
@@ -109,7 +109,7 @@ func NewServiceServingCertController(services informers.ServiceInformer, secrets
 		},
 		resyncInterval,
 	)
-	sc.secretHasSynced = services.Informer().GetController().HasSynced
+	sc.secretHasSynced = secrets.Informer().GetController().HasSynced
 	sc.secretLister = secrets.Lister()
 
 	sc.syncHandler = sc.syncService

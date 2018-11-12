@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/glog"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	appsclientv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 	coreclientv1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/util/cert"
 
 	operatorsv1alpha1 "github.com/openshift/api/operator/v1alpha1"
 	scsv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
@@ -18,6 +21,7 @@ import (
 	"github.com/openshift/library-go/pkg/operator/resource/resourceapply"
 	"github.com/openshift/library-go/pkg/operator/resource/resourcemerge"
 	"github.com/openshift/library-go/pkg/operator/resource/resourceread"
+	operatorutil "github.com/openshift/service-serving-cert-signer/pkg/operator/util"
 	"github.com/openshift/service-serving-cert-signer/pkg/operator/v310_00_assets"
 )
 
@@ -108,6 +112,13 @@ func manageSigningSecret_v311_00_to_latest(client coreclientv1.SecretsGetter) (*
 	secret := resourceread.ReadSecretV1OrDie(v310_00_assets.MustAsset("v3.10.0/service-serving-cert-signer-controller/signing-secret.yaml"))
 	existing, err := client.Secrets(secret.Namespace).Get(secret.Name, metav1.GetOptions{})
 	if !apierrors.IsNotFound(err) {
+		certs, err := cert.ParseCertsPEM(existing.Data["tls.crt"])
+		if err == nil && certs[0] != nil {
+			if operatorutil.CertHalfwayExpired(certs[0]) {
+				glog.V(2).Infof("warning: signing CA is halfway to expiration")
+				// TODO: Rotate CA here.
+			}
+		}
 		return existing, false, err
 	}
 

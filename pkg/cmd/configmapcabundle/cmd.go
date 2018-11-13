@@ -9,7 +9,7 @@ import (
 	servicecertsignerv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
 	"github.com/openshift/service-serving-cert-signer/pkg/boilerplate/controllercmd"
 	"github.com/openshift/service-serving-cert-signer/pkg/cmd/scheme"
-	"github.com/openshift/service-serving-cert-signer/pkg/controller/configmapcainjector"
+	"github.com/openshift/service-serving-cert-signer/pkg/controller/configmapcainjector/starter"
 	"github.com/openshift/service-serving-cert-signer/pkg/version"
 )
 
@@ -33,7 +33,7 @@ func NewController() *cobra.Command {
 func controllerFunc(uncastConfig runtime.Object) (controllercmd.StartFunc, *operatorv1alpha1.GenericOperatorConfig, error) {
 	config := uncastConfig.(*servicecertsignerv1alpha1.ConfigMapCABundleInjectorConfig)
 
-	startFunc, err := configmapcainjector.ToStartFunc(config)
+	startFunc, err := starter.ToStartFunc(config)
 	if err != nil {
 		return nil, nil, err
 	}

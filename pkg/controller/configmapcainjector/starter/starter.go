@@ -1,4 +1,4 @@
-package configmapcainjector
+package starter
 
 import (
 	"crypto/x509"
@@ -13,6 +13,7 @@ import (
 
 	servicecertsignerv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
+	"github.com/openshift/service-serving-cert-signer/pkg/controller/configmapcainjector/controller"
 )
 
 func ToStartFunc(config *servicecertsignerv1alpha1.ConfigMapCABundleInjectorConfig) (controllercmd.StartFunc, error) {
@@ -34,12 +35,12 @@ func ToStartFunc(config *servicecertsignerv1alpha1.ConfigMapCABundleInjectorConf
 		return nil, err
 	}
 
-	opts := &configMapCABundleInjectorOptions{ca: ca}
+	opts := &configMapCABundleInjectorOptions{ca: string(ca)}
 	return opts.runConfigMapCABundleInjector, nil
 }
 
 type configMapCABundleInjectorOptions struct {
-	ca []byte
+	ca string
 }
 
 // These might need adjustment
@@ -55,7 +56,7 @@ func (o *configMapCABundleInjectorOptions) runConfigMapCABundleInjector(clientCo
 	}
 	kubeInformers := informers.NewSharedInformerFactory(kubeClient, InformerResyncInterval)
 
-	configMapInjectorController := NewConfigMapCABundleInjectionController(
+	configMapInjectorController := controller.NewConfigMapCABundleInjectionController(
 		kubeInformers.Core().V1().ConfigMaps(),
 		kubeClient.CoreV1(),
 		o.ca,

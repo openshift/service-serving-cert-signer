@@ -1,4 +1,4 @@
-package apiservicecabundle
+package starter
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 
 	servicecertsignerv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
+	"github.com/openshift/service-serving-cert-signer/pkg/controller/apiservicecabundle/controller"
 )
 
 func ToStartFunc(config *servicecertsignerv1alpha1.APIServiceCABundleInjectorConfig) (controllercmd.StartFunc, error) {
@@ -38,7 +39,7 @@ func (o *apiServiceCABundleInjectorOptions) runAPIServiceCABundleInjector(client
 	}
 	apiServiceInformers := apiserviceinformer.NewSharedInformerFactory(apiServiceClient, 2*time.Minute)
 
-	servingCertUpdateController := NewAPIServiceCABundleInjector(
+	servingCertUpdateController := controller.NewAPIServiceCABundleInjector(
 		apiServiceInformers.Apiregistration().V1().APIServices(),
 		apiServiceClient.ApiregistrationV1(),
 		o.caBundleContent,

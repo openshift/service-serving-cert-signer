@@ -1,4 +1,4 @@
-package servingcert
+package starter
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ import (
 	servicecertsignerv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
 	"github.com/openshift/library-go/pkg/controller/controllercmd"
 	"github.com/openshift/library-go/pkg/crypto"
+	"github.com/openshift/service-serving-cert-signer/pkg/controller/servingcert/controller"
 )
 
 func ToStartFunc(config *servicecertsignerv1alpha1.ServiceServingCertSignerConfig) (controllercmd.StartFunc, error) {
@@ -34,7 +35,7 @@ func (o *servingCertOptions) runServingCert(clientConfig *rest.Config, stopCh <-
 	}
 	kubeInformers := informers.NewSharedInformerFactory(kubeClient, 2*time.Minute)
 
-	servingCertController := NewServiceServingCertController(
+	servingCertController := controller.NewServiceServingCertController(
 		kubeInformers.Core().V1().Services(),
 		kubeInformers.Core().V1().Secrets(),
 		kubeClient.CoreV1(),
@@ -44,7 +45,7 @@ func (o *servingCertOptions) runServingCert(clientConfig *rest.Config, stopCh <-
 		"cluster.local",
 		2*time.Minute,
 	)
-	servingCertUpdateController := NewServiceServingCertUpdateController(
+	servingCertUpdateController := controller.NewServiceServingCertUpdateController(
 		kubeInformers.Core().V1().Services(),
 		kubeInformers.Core().V1().Secrets(),
 		kubeClient.CoreV1(),

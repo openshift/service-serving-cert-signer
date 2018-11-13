@@ -9,35 +9,39 @@ import (
 	apiserviceclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	apiserviceinformer "k8s.io/kube-aggregator/pkg/client/informers/externalversions"
 
-	configv1 "github.com/openshift/api/config/v1"
 	servicecertsignerv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
+	"github.com/openshift/library-go/pkg/controller/controllercmd"
 )
 
-type APIServiceCABundleInjectorOptions struct {
-	Config         *servicecertsignerv1alpha1.APIServiceCABundleInjectorConfig
-	LeaderElection configv1.LeaderElection
+func ToStartFunc(config *servicecertsignerv1alpha1.APIServiceCABundleInjectorConfig) (controllercmd.StartFunc, error) {
+	if len(config.CABundleFile) == 0 {
+		return nil, fmt.Errorf("no signing cert/key pair provided")
+	}
+
+	caBundleContent, err := ioutil.ReadFile(config.CABundleFile)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := &apiServiceCABundleInjectorOptions{caBundleContent: caBundleContent}
+	return opts.runAPIServiceCABundleInjector, nil
 }
 
-func (o *APIServiceCABundleInjectorOptions) RunAPIServiceCABundleInjector(clientConfig *rest.Config, stopCh <-chan struct{}) error {
+type apiServiceCABundleInjectorOptions struct {
+	caBundleContent []byte
+}
+
+func (o *apiServiceCABundleInjectorOptions) runAPIServiceCABundleInjector(clientConfig *rest.Config, stopCh <-chan struct{}) error {
 	apiServiceClient, err := apiserviceclient.NewForConfig(clientConfig)
 	if err != nil {
 		return err
 	}
 	apiServiceInformers := apiserviceinformer.NewSharedInformerFactory(apiServiceClient, 2*time.Minute)
 
-	caBundleFile := o.Config.CABundleFile
-	if len(caBundleFile) == 0 {
-		return fmt.Errorf("no signing cert/key pair provided")
-	}
-	caBundleContent, err := ioutil.ReadFile(caBundleFile)
-	if err != nil {
-		return err
-	}
-
 	servingCertUpdateController := NewAPIServiceCABundleInjector(
 		apiServiceInformers.Apiregistration().V1().APIServices(),
 		apiServiceClient.ApiregistrationV1(),
-		caBundleContent,
+		o.caBundleContent,
 	)
 
 	apiServiceInformers.Start(stopCh)

@@ -11,14 +11,35 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"github.com/golang/glog"
-	configv1 "github.com/openshift/api/config/v1"
 	servicecertsignerv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
+	"github.com/openshift/library-go/pkg/controller/controllercmd"
 )
 
-type ConfigMapCABundleInjectorOptions struct {
-	Config         *servicecertsignerv1alpha1.ConfigMapCABundleInjectorConfig
-	LeaderElection configv1.LeaderElection
+func ToStartFunc(config *servicecertsignerv1alpha1.ConfigMapCABundleInjectorConfig) (controllercmd.StartFunc, error) {
+	if len(config.CABundleFile) == 0 {
+		return nil, fmt.Errorf("no ca bundle provided")
+	}
+
+	ca, err := ioutil.ReadFile(config.CABundleFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify that there is at least one cert in the bundle file
+	block, _ := pem.Decode(ca)
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse CA bundle file as pem")
+	}
+	if _, err = x509.ParseCertificate(block.Bytes); err != nil {
+		return nil, err
+	}
+
+	opts := &configMapCABundleInjectorOptions{ca: ca}
+	return opts.runConfigMapCABundleInjector, nil
+}
+
+type configMapCABundleInjectorOptions struct {
+	ca []byte
 }
 
 // These might need adjustment
@@ -27,32 +48,17 @@ const (
 	ControllerResyncInterval = 20 * time.Minute
 )
 
-func (o *ConfigMapCABundleInjectorOptions) RunConfigMapCABundleInjector(clientConfig *rest.Config, stopCh <-chan struct{}) error {
+func (o *configMapCABundleInjectorOptions) runConfigMapCABundleInjector(clientConfig *rest.Config, stopCh <-chan struct{}) error {
 	kubeClient, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
 		return err
 	}
 	kubeInformers := informers.NewSharedInformerFactory(kubeClient, InformerResyncInterval)
 
-	caPem, err := ioutil.ReadFile(o.Config.CABundleFile)
-	if err != nil {
-		return err
-	}
-
-	// Verify that there is at least one cert in the bundle file
-	block, _ := pem.Decode(caPem)
-	if block == nil {
-		return fmt.Errorf("failed to parse CA bundle file as pem")
-	}
-	if _, err = x509.ParseCertificate(block.Bytes); err != nil {
-		return err
-	}
-	glog.V(4).Infof("using ca PEM: %s", string(caPem))
-
 	configMapInjectorController := NewConfigMapCABundleInjectionController(
 		kubeInformers.Core().V1().ConfigMaps(),
 		kubeClient.CoreV1(),
-		caPem,
+		o.ca,
 		ControllerResyncInterval,
 	)
 

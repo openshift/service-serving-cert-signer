@@ -276,6 +276,103 @@ func TestAlreadyExistingSecretControllerFlow(t *testing.T) {
 
 }
 
+// Test the flow for updating an already existing secret with a newly issued certificate.
+func TestAlreadyExistingSecretUpdateControllerFlow(t *testing.T) {
+	stopChannel := make(chan struct{})
+	defer close(stopChannel)
+	received := make(chan bool)
+
+	expectedSecretName := "new-secret"
+	serviceName := "svc-name"
+	serviceUID := "some-uid"
+	expectedSecretAnnotations := map[string]string{ServiceUIDAnnotation: serviceUID, ServiceNameAnnotation: serviceName}
+	namespace := "ns"
+	preRegenSecretData := "asdf"
+
+	existingSecret := &v1.Secret{}
+	existingSecret.Name = expectedSecretName
+	existingSecret.Namespace = namespace
+	existingSecret.Type = v1.SecretTypeTLS
+	existingSecret.Annotations = expectedSecretAnnotations
+	existingSecret.Data = map[string][]byte{
+		"tls.crt": []byte(preRegenSecretData),
+	}
+
+	caName, kubeclient, fakeWatch, _, controller, informerFactory := controllerSetup([]runtime.Object{existingSecret}, stopChannel, t)
+	kubeclient.PrependReactor("create", "secrets", func(action clientgotesting.Action) (handled bool, ret runtime.Object, err error) {
+		return true, &v1.Secret{}, kapierrors.NewAlreadyExists(v1.Resource("secrets"), "new-secret")
+	})
+	controller.syncHandler = func(serviceKey string) error {
+		defer func() { received <- true }()
+
+		err := controller.syncService(serviceKey)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		return err
+	}
+	informerFactory.Start(stopChannel)
+	go controller.Run(1, stopChannel)
+
+	expectedServiceAnnotations := map[string]string{ServingCertSecretAnnotation: expectedSecretName, ServingCertCreatedByAnnotation: caName}
+
+	serviceToAdd := &v1.Service{}
+	serviceToAdd.Name = serviceName
+	serviceToAdd.Namespace = namespace
+	serviceToAdd.UID = types.UID(serviceUID)
+	serviceToAdd.Annotations = map[string]string{
+		ServingCertSecretAnnotation:    expectedSecretName,
+		ServingCertCreatedByAnnotation: "foo", // by changing the created-by annotation to something, it triggers a regeneration of an existing secret.
+	}
+	fakeWatch.Add(serviceToAdd)
+
+	t.Log("waiting to reach syncHandler")
+	select {
+	case <-received:
+	case <-time.After(time.Duration(30 * time.Second)):
+		t.Fatalf("failed to call into syncService")
+	}
+
+	foundSecret := false
+	foundServiceUpdate := false
+	foundSecretUpdate := false
+	for _, action := range kubeclient.Actions() {
+		switch {
+		case action.Matches("update", "secrets"):
+			updateSecret := action.(clientgotesting.UpdateAction)
+			secret := updateSecret.GetObject().(*v1.Secret)
+			if string(secret.Data["tls.crt"]) == preRegenSecretData {
+				t.Errorf("expected an update of secret data, got %s", string(secret.Data["tls.crt"]))
+				continue
+			}
+			foundSecretUpdate = true
+		case action.Matches("get", "secrets"):
+			foundSecret = true
+
+		case action.Matches("update", "services"):
+			updateService := action.(clientgotesting.UpdateAction)
+			service := updateService.GetObject().(*v1.Service)
+			if !reflect.DeepEqual(service.Annotations, expectedServiceAnnotations) {
+				t.Errorf("expected %v, got %v", expectedServiceAnnotations, service.Annotations)
+				continue
+			}
+			foundServiceUpdate = true
+
+		}
+	}
+
+	if !foundSecretUpdate {
+		t.Errorf("secret wasn't updated. Got %v\n", kubeclient.Actions())
+	}
+	if !foundSecret {
+		t.Errorf("secret wasn't retrieved.  Got %v\n", kubeclient.Actions())
+	}
+	if !foundServiceUpdate {
+		t.Errorf("service wasn't updated.  Got %v\n", kubeclient.Actions())
+	}
+}
+
 func TestAlreadyExistingSecretForDifferentUIDControllerFlow(t *testing.T) {
 	stopChannel := make(chan struct{})
 	defer close(stopChannel)

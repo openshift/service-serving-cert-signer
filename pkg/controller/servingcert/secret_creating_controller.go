@@ -20,8 +20,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/openshift/library-go/pkg/crypto"
 	ocontroller "github.com/openshift/library-go/pkg/controller"
+	"github.com/openshift/library-go/pkg/crypto"
 	"github.com/openshift/service-serving-cert-signer/pkg/controller/servingcert/cryptoextensions"
 )
 
@@ -296,6 +296,19 @@ func (sc *ServiceServingCertController) syncService(key string) error {
 			serviceCopy.Annotations[ServingCertErrorNumAnnotation] = strconv.Itoa(getNumFailures(serviceCopy) + 1)
 			_, updateErr := sc.serviceClient.Services(serviceCopy.Namespace).Update(serviceCopy)
 
+			// if we're past the max retries and we successfully updated, then the sync loop successfully handled this service and we want to forget it
+			if updateErr == nil && getNumFailures(serviceCopy) >= sc.maxRetries {
+				return nil
+			}
+			return errors.New(serviceCopy.Annotations[ServingCertErrorAnnotation])
+		}
+		glog.V(4).Infof("updating already existing secret %s", secret.Name)
+		_, err = sc.secretClient.Secrets(serviceCopy.Namespace).Update(secret)
+		if err != nil {
+			// Use same annotation update logic as above.. Should be refactored
+			serviceCopy.Annotations[ServingCertErrorAnnotation] = fmt.Sprintf("secret/%v failed to update after regeneration: %v", secret.Name, err)
+			serviceCopy.Annotations[ServingCertErrorNumAnnotation] = strconv.Itoa(getNumFailures(serviceCopy) + 1)
+			_, updateErr := sc.serviceClient.Services(serviceCopy.Namespace).Update(serviceCopy)
 			// if we're past the max retries and we successfully updated, then the sync loop successfully handled this service and we want to forget it
 			if updateErr == nil && getNumFailures(serviceCopy) >= sc.maxRetries {
 				return nil

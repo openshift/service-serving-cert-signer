@@ -17,8 +17,10 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/openshift/library-go/pkg/crypto"
+	"strconv"
+
 	ocontroller "github.com/openshift/library-go/pkg/controller"
+	"github.com/openshift/library-go/pkg/crypto"
 	"github.com/openshift/service-serving-cert-signer/pkg/controller/servingcert/cryptoextensions"
 )
 
@@ -40,6 +42,7 @@ type ServiceServingCertUpdateController struct {
 	dnsSuffix string
 	// minTimeLeftForCert is how much time is remaining for the serving cert before regenerating it.
 	minTimeLeftForCert time.Duration
+	caGeneration       int64
 
 	// syncHandler does the work. It's factored out for unit testing
 	syncHandler func(serviceKey string) error
@@ -57,6 +60,8 @@ func NewServiceServingCertUpdateController(services informers.ServiceInformer, s
 		dnsSuffix: dnsSuffix,
 		// TODO base the expiry time on a percentage of the time for the lifespan of the cert
 		minTimeLeftForCert: 1 * time.Hour,
+		// TODO: Pass in generation number from config
+		caGeneration: 1,
 	}
 
 	sc.serviceLister = services.Lister()
@@ -193,6 +198,7 @@ func (sc *ServiceServingCertUpdateController) syncSecret(key string) error {
 		return err
 	}
 	secretCopy.Annotations[ServingCertExpiryAnnotation] = servingCert.Certs[0].NotAfter.Format(time.RFC3339)
+	secretCopy.Annotations[ServingCertSignerGeneration] = strconv.FormatInt(sc.signerGeneration(), 10)
 	secretCopy.Data[v1.TLSCertKey], secretCopy.Data[v1.TLSPrivateKeyKey], err = servingCert.GetPEMBytes()
 	if err != nil {
 		return err
@@ -225,6 +231,11 @@ func (sc *ServiceServingCertUpdateController) requiresRegeneration(secret *v1.Se
 		return false, nil
 	}
 
+	// Regenerate if the CA was rotated.
+	if secret.Annotations[ServingCertSignerGeneration] != strconv.FormatInt(sc.signerGeneration(), 10) {
+		return true, sharedService
+	}
+
 	// if we don't have an ownerref, just go ahead and regenerate.  It's easier than writing a
 	// secondary logic flow.
 	if !ocontroller.HasOwnerRef(secret, ownerRef(sharedService)) {
@@ -247,4 +258,8 @@ func (sc *ServiceServingCertUpdateController) requiresRegeneration(secret *v1.Se
 	}
 
 	return false, nil
+}
+
+func (sc *ServiceServingCertUpdateController) signerGeneration() int64 {
+	return sc.caGeneration
 }

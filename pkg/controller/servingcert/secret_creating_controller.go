@@ -20,8 +20,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/openshift/library-go/pkg/crypto"
 	ocontroller "github.com/openshift/library-go/pkg/controller"
+	"github.com/openshift/library-go/pkg/crypto"
 	"github.com/openshift/service-serving-cert-signer/pkg/controller/servingcert/cryptoextensions"
 )
 
@@ -45,6 +45,10 @@ const (
 	// ServingCertExpiryAnnotation is an annotation that holds the expiry time of the certificate.  It accepts time in the
 	// RFC3339 format: 2018-11-29T17:44:39Z
 	ServingCertExpiryAnnotation = "service.alpha.openshift.io/expiry"
+	// ServingCertSignerGeneration holds the generation number of the CA used to sign the cert. After CA rollover
+	// happens, the current generation will not match the generation stored in the annotation and trigger recreation of
+	// the secret. Rollover does not change the CA CN, so we cannot rely on ServingCertCreatedByAnnotation for this.
+	ServingCertSignerGeneration = "service.alpha.openshift.io/signer-generation"
 )
 
 // ServiceServingCertController is responsible for synchronizing Service objects stored
@@ -63,8 +67,9 @@ type ServiceServingCertController struct {
 	secretLister    listers.SecretLister
 	secretHasSynced cache.InformerSynced
 
-	ca        *crypto.CA
-	dnsSuffix string
+	ca           *crypto.CA
+	dnsSuffix    string
+	caGeneration int64
 
 	// syncHandler does the work. It's factored out for unit testing
 	syncHandler func(serviceKey string) error
@@ -82,6 +87,8 @@ func NewServiceServingCertController(services informers.ServiceInformer, secrets
 
 		ca:        ca,
 		dnsSuffix: dnsSuffix,
+		// TODO: Pass in generation number from config
+		caGeneration: 1,
 	}
 
 	services.Informer().AddEventHandlerWithResyncPeriod(
@@ -251,6 +258,7 @@ func (sc *ServiceServingCertController) syncService(key string) error {
 				ServiceUIDAnnotation:        string(serviceCopy.UID),
 				ServiceNameAnnotation:       serviceCopy.Name,
 				ServingCertExpiryAnnotation: servingCert.Certs[0].NotAfter.Format(time.RFC3339),
+				ServingCertSignerGeneration: strconv.FormatInt(sc.signerGeneration(), 10),
 			},
 		},
 		Type: v1.SecretTypeTLS,
@@ -333,10 +341,16 @@ func (sc *ServiceServingCertController) requiresCertGeneration(service *v1.Servi
 	if getNumFailures(service) >= sc.maxRetries {
 		return false
 	}
-	_, err := sc.secretLister.Secrets(service.Namespace).Get(secretName)
+	secret, err := sc.secretLister.Secrets(service.Namespace).Get(secretName)
 	if kapierrors.IsNotFound(err) {
 		return true
 	}
+
+	// Regenerate if the CA was rotated.
+	if secret.Annotations[ServingCertSignerGeneration] != strconv.FormatInt(sc.signerGeneration(), 10) {
+		return true
+	}
+
 	if service.Annotations[ServingCertCreatedByAnnotation] == sc.ca.Config.Certs[0].Subject.CommonName {
 		return false
 	}
@@ -354,4 +368,8 @@ func ownerRef(service *v1.Service) metav1.OwnerReference {
 		Name:       service.Name,
 		UID:        service.UID,
 	}
+}
+
+func (sc *ServiceServingCertController) signerGeneration() int64 {
+	return sc.caGeneration
 }

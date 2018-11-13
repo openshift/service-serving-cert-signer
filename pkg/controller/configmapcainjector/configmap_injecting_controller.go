@@ -167,8 +167,13 @@ func (ic *ConfigMapCABundleInjectionController) syncConfigMap(key string) error 
 		return nil
 	}
 
-	configMapCopy := sharedConfigMap.DeepCopy()
 	// make a copy to avoid mutating cache state
+	configMapCopy := sharedConfigMap.DeepCopy()
+
+	if configMapCopy.Data == nil {
+		configMapCopy.Data = map[string]string{}
+	}
+
 	configMapCopy.Data[InjectionDataKey] = ic.ca
 
 	_, err = ic.configMapClient.ConfigMaps(configMapCopy.Namespace).Update(configMapCopy)

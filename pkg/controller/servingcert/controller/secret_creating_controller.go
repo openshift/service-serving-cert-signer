@@ -173,7 +173,7 @@ func (sc *ServiceServingCertController) generateCert(serviceCopy *v1.Service) er
 	}
 
 	secret := toBaseSecret(serviceCopy)
-	if err := toRequiredSecret(sc.dnsSuffix, sc.ca, serviceCopy, secret); err != nil {
+	if err := toRequiredSecret(sc.dnsSuffix, sc.ca, serviceCopy, secret, sc.appendIntermediate); err != nil {
 		return err
 	}
 
@@ -299,7 +299,7 @@ func toBaseSecret(service *v1.Service) *v1.Secret {
 	}
 }
 
-func toRequiredSecret(dnsSuffix string, ca *crypto.CA, service *v1.Service, secretCopy *v1.Secret) error {
+func toRequiredSecret(dnsSuffix string, ca *crypto.CA, service *v1.Service, secretCopy *v1.Secret, intermediateFunc func([]byte) ([]byte, error)) error {
 	dnsName := service.Name + "." + service.Namespace + ".svc"
 	fqDNSName := dnsName + "." + dnsSuffix
 	certificateLifetime := 365 * 2 // 2 years
@@ -316,6 +316,13 @@ func toRequiredSecret(dnsSuffix string, ca *crypto.CA, service *v1.Service, secr
 		return err
 	}
 
+	if intermediateFunc != nil {
+		certBytes, err = intermediateFunc(certBytes)
+		if err != nil {
+			return err
+		}
+	}
+
 	if secretCopy.Annotations == nil {
 		secretCopy.Annotations = map[string]string{}
 	}
@@ -330,4 +337,11 @@ func toRequiredSecret(dnsSuffix string, ca *crypto.CA, service *v1.Service, secr
 	ocontroller.EnsureOwnerRef(secretCopy, ownerRef(service))
 
 	return nil
+}
+
+func (sc *ServiceServingCertController) appendIntermediate(certPem []byte) ([]byte, error) {
+	// TODO: If there's currently an intermediate that needs to be distributed with signing certs (the one signed by
+	// the old CA key), append it to the end of certPem. For TLS servers the intermediate must come after the end-entity
+	// certificate.
+	return certPem, nil
 }

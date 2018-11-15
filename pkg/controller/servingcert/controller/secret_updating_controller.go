@@ -125,7 +125,7 @@ func (sc *ServiceServingCertUpdateController) syncSecret(obj interface{}) error 
 	// make a copy to avoid mutating cache state
 	secretCopy := sharedSecret.DeepCopy()
 
-	if err := toRequiredSecret(sc.dnsSuffix, sc.ca, service, secretCopy); err != nil {
+	if err := toRequiredSecret(sc.dnsSuffix, sc.ca, service, secretCopy, sc.appendIntermediate); err != nil {
 		return err
 	}
 
@@ -182,4 +182,11 @@ func (sc *ServiceServingCertUpdateController) requiresRegeneration(secret *v1.Se
 func toServiceName(secret *v1.Secret) (string, bool) {
 	serviceName := secret.Annotations[api.ServiceNameAnnotation]
 	return serviceName, len(serviceName) != 0
+}
+
+func (sc *ServiceServingCertUpdateController) appendIntermediate(certPem []byte) ([]byte, error) {
+	// TODO: If there's currently an intermediate that needs to be distributed with signing certs (the one signed by
+	// the old CA key), append it to the end of certPem. For TLS servers the intermediate must come after the end-entity
+	// certificate.
+	return certPem, nil
 }

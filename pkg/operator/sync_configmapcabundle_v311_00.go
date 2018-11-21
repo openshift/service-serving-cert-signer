@@ -83,7 +83,7 @@ func syncConfigMapCABundleController_v311_00_to_latest(c serviceCertSignerOperat
 		errors = append(errors, fmt.Errorf("%q: %v", "deployment", err))
 	}
 
-	return resourcemerge.ApplyDeploymentGenerationAvailability(versionAvailability, actualDeployment, errors...), errors
+	return resourcemerge.ApplyDeploymentGenerationAvailabilityV1alpha1(versionAvailability, actualDeployment, errors...), errors
 }
 
 func manageConfigMapCABundleConfigMap_v311_00_to_latest(client coreclientv1.ConfigMapsGetter, operatorConfig *scsv1alpha1.ServiceCertSignerOperatorConfig) (*corev1.ConfigMap, bool, error) {
@@ -101,7 +101,7 @@ func manageConfigMapCABundleDeployment_v311_00_to_latest(client appsclientv1.Dep
 	required.Spec.Template.Spec.Containers[0].Image = options.Spec.ImagePullSpec
 	required.Spec.Template.Spec.Containers[0].Args = append(required.Spec.Template.Spec.Containers[0].Args, fmt.Sprintf("-v=%d", options.Spec.Logging.Level))
 
-	return resourceapply.ApplyDeployment(client, required, resourcemerge.ExpectedDeploymentGeneration(required, previousAvailability), forceDeployment)
+	return resourceapply.ApplyDeployment(client, required, resourcemerge.ExpectedDeploymentGeneration(required, availabilityToGenerations(previousAvailability)), forceDeployment)
 }
 
 // TODO manage rotation in addition to initial creation

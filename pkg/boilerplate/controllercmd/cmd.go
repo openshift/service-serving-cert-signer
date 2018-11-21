@@ -7,13 +7,13 @@ import (
 	"reflect"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/apiserver/pkg/util/logs"
 	"k8s.io/client-go/rest"
@@ -96,7 +96,7 @@ func (c *ControllerCommandConfig) NewCommand() *cobra.Command {
 				glog.Fatal(err)
 			}
 
-			if err := c.startController(); err != nil {
+			if err := c.startController(wait.NeverStop); err != nil {
 				glog.Fatal(err)
 			}
 		},
@@ -107,7 +107,7 @@ func (c *ControllerCommandConfig) NewCommand() *cobra.Command {
 	return cmd
 }
 
-func (c *ControllerCommandConfig) startController() error {
+func (c *ControllerCommandConfig) startController(stopCh <-chan struct{}) error {
 	uncastConfig, err := c.flags.ToConfigObj(c.configScheme, c.versions...)
 	if err != nil {
 		return err
@@ -131,5 +131,5 @@ func (c *ControllerCommandConfig) startController() error {
 	return controllercmd.NewController(c.componentName, injectComponentNameFunc).
 		WithKubeConfigFile(c.flags.KubeConfigFile, nil).
 		WithLeaderElection(config.LeaderElection, c.componentNamespace, c.componentName+"-lock").
-		Run()
+		Run(stopCh) // TODO master team has improved their controller command, need to copy there stuff here
 }

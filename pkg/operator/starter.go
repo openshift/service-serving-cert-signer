@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -17,16 +18,16 @@ import (
 	"github.com/openshift/library-go/pkg/operator/status"
 )
 
-func RunOperator(clientConfig *rest.Config, stopCh <-chan struct{}) error {
-	kubeClient, err := kubernetes.NewForConfig(clientConfig)
+func RunOperator(_ *unstructured.Unstructured, kubeConfig *rest.Config, stopCh <-chan struct{}) error {
+	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	scsClient, err := scsclient.NewForConfig(clientConfig)
+	scsClient, err := scsclient.NewForConfig(kubeConfig)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	dynamicClient, err := dynamic.NewForConfig(clientConfig)
+	dynamicClient, err := dynamic.NewForConfig(kubeConfig)
 	if err != nil {
 		return err
 	}
@@ -57,6 +58,7 @@ func RunOperator(clientConfig *rest.Config, stopCh <-chan struct{}) error {
 	go clusterOperatorStatus.Run(1, stopCh)
 
 	<-stopCh
+
 	return fmt.Errorf("stopped")
 }
 

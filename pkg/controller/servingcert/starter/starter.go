@@ -4,32 +4,29 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
 	servicecertsignerv1alpha1 "github.com/openshift/api/servicecertsigner/v1alpha1"
-	"github.com/openshift/library-go/pkg/controller/controllercmd"
 	"github.com/openshift/library-go/pkg/crypto"
+	"github.com/openshift/service-serving-cert-signer/pkg/boilerplate/controllercmd"
 	"github.com/openshift/service-serving-cert-signer/pkg/controller/servingcert/controller"
 )
 
-func ToStartFunc(config *servicecertsignerv1alpha1.ServiceServingCertSignerConfig) (controllercmd.StartFunc, error) {
-	ca, err := crypto.GetCA(config.Signer.CertFile, config.Signer.KeyFile, "")
-	if err != nil {
-		return nil, err
+func RunServingCert(unstructuredConfig *unstructured.Unstructured, kubeConfig *rest.Config, stopCh <-chan struct{}) error {
+	config := &servicecertsignerv1alpha1.ServiceServingCertSignerConfig{}
+	if err := controllercmd.FromUnstructured(unstructuredConfig, servicecertsignerv1alpha1.GroupVersion, config); err != nil {
+		return err
 	}
 
-	opts := &servingCertOptions{ca: ca}
-	return opts.runServingCert, nil
-}
+	ca, err := crypto.GetCA(config.Signer.CertFile, config.Signer.KeyFile, "")
+	if err != nil {
+		return err
+	}
 
-type servingCertOptions struct {
-	ca *crypto.CA
-}
-
-func (o *servingCertOptions) runServingCert(clientConfig *rest.Config, stopCh <-chan struct{}) error {
-	kubeClient, err := kubernetes.NewForConfig(clientConfig)
+	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
 		return err
 	}
@@ -40,7 +37,7 @@ func (o *servingCertOptions) runServingCert(clientConfig *rest.Config, stopCh <-
 		kubeInformers.Core().V1().Secrets(),
 		kubeClient.CoreV1(),
 		kubeClient.CoreV1(),
-		o.ca,
+		ca,
 		// TODO this needs to be configurable
 		"cluster.local",
 	)
@@ -48,7 +45,7 @@ func (o *servingCertOptions) runServingCert(clientConfig *rest.Config, stopCh <-
 		kubeInformers.Core().V1().Services(),
 		kubeInformers.Core().V1().Secrets(),
 		kubeClient.CoreV1(),
-		o.ca,
+		ca,
 		// TODO this needs to be configurable
 		"cluster.local",
 	)

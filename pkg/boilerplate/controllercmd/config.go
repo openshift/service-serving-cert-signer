@@ -14,7 +14,7 @@ func FromUnstructured(unstructuredConfig *unstructured.Unstructured, gv schema.G
 		return fmt.Errorf("config is required")
 	}
 
-	gvk := gv.WithKind(reflect.TypeOf(config).String())
+	gvk := gv.WithKind(reflect.TypeOf(config).Elem().Name())
 	if actualGVK := unstructuredConfig.GroupVersionKind(); actualGVK != gvk {
 		return fmt.Errorf("invalid config type, expected %s, got %s", gvk, actualGVK)
 	}

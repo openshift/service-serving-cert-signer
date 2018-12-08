@@ -56,9 +56,16 @@ func (o *configMapCABundleInjectorOptions) runConfigMapCABundleInjector(clientCo
 		o.ca,
 	)
 
+	saTokenCABundleInjectorController := controller.NewSATokenCABundleInjectionController(
+		kubeInformers.Core().V1().Secrets(),
+		kubeClient.CoreV1(),
+		o.ca,
+	)
+
 	kubeInformers.Start(stopCh)
 
 	go configMapInjectorController.Run(5, stopCh)
+	go saTokenCABundleInjectorController.Run(5, stopCh)
 
 	<-stopCh
 

@@ -74,7 +74,7 @@ func createServingCertAnnotatedService(client *kubernetes.Clientset, secretName,
 }
 
 func pollForServiceServingSecret(client *kubernetes.Clientset, secretName, namespace string) error {
-	return wait.PollImmediate(time.Second, 10*time.Second, func() (bool, error) {
+	return wait.PollImmediate(time.Second, 10*time.Minute, func() (bool, error) {
 		_, err := client.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, nil
@@ -84,6 +84,49 @@ func pollForServiceServingSecret(client *kubernetes.Clientset, secretName, names
 		}
 		return true, nil
 	})
+}
+
+func pollForInjectedCABundleSecret(client *kubernetes.Clientset, secretName, namespace string) error {
+	return wait.PollImmediate(time.Second, 5*time.Minute, func() (bool, error) {
+		secret, err := client.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+		if err != nil && errors.IsNotFound(err) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		if _, ok := secret.Data[api.InjectionDataKey]; !ok {
+			return false, nil
+		}
+
+		return true, nil
+	})
+}
+
+func pollForServiceAccountTokenSecret(client *kubernetes.Clientset, saName, tokenPrefix, namespace string) (string, error) {
+	var secretName string
+	err := wait.PollImmediate(time.Second, 7*time.Minute, func() (bool, error) {
+		serviceAccount, err := client.CoreV1().ServiceAccounts(namespace).Get(saName, metav1.GetOptions{})
+		if err != nil && errors.IsNotFound(err) {
+			return false, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		var tokenSecretName string
+		for _, obj := range serviceAccount.Secrets {
+			if strings.HasPrefix(obj.Name, tokenPrefix) {
+				tokenSecretName = obj.Name
+			}
+		}
+		if len(tokenSecretName) == 0 {
+			return false, nil
+		}
+		secretName = tokenSecretName
+		return true, nil
+	})
+
+	return secretName, err
 }
 
 func cleanupServiceSignerTestObjects(client *kubernetes.Clientset, secretName, serviceName, namespace string) {
@@ -148,6 +191,18 @@ func TestE2E(t *testing.T) {
 		err = pollForServiceServingSecret(adminClient, testSecretName, ns.Name)
 		if err != nil {
 			t.Fatalf("error fetching created serving cert secret: %v", err)
+		}
+	})
+
+	t.Run("sa-token-annotation", func(t *testing.T) {
+		tokenSecretName, err := pollForServiceAccountTokenSecret(adminClient, "builder", "builder-token", "kube-system")
+		if err != nil {
+			t.Fatalf("error fetching default builder SA token secret name: %v", err)
+		}
+
+		err = pollForInjectedCABundleSecret(adminClient, tokenSecretName, "kube-system")
+		if err != nil {
+			t.Fatalf("error checking token secret for injected data: %v", err)
 		}
 	})
 

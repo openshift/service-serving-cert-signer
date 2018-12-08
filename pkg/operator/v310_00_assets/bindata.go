@@ -393,6 +393,17 @@ rules:
   - events
   verbs:
   - create
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
 `)
 
 func v3100ConfigmapCabundleControllerClusterroleYamlBytes() ([]byte, error) {

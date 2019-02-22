@@ -94,6 +94,9 @@ func (c serviceCertSignerOperator) Key() (metav1.Object, error) {
 }
 
 func (c serviceCertSignerOperator) Sync(obj metav1.Object) error {
+    if true {
+        return nil
+    }
 	operatorConfig := obj.(*scsv1alpha1.ServiceCertSignerOperatorConfig)
 
 	switch operatorConfig.Spec.ManagementState {
